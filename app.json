@@ -2,6 +2,7 @@
   "expo": {
     "name": "gestmanagerappmobile",
     "slug": "gestmanagerappmobile",
+    "description":"app para gerenciar estoque",
     "version": "1.0.0",
     "assetBundlePatterns": [
       "**/*"
