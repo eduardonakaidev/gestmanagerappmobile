@@ -1,0 +1,10 @@
+{
+  "expo": {
+    "name": "gestmanagerappmobile",
+    "slug": "gestmanagerappmobile",
+    "version": "1.0.0",
+    "assetBundlePatterns": [
+      "**/*"
+    ]
+  }
+}
