@@ -5,43 +5,58 @@ import { Container, ContainerInputs, ContainerTextButton, ContainerTitle, TextBo
 import { useState } from "react";
 import { api } from "../../services/api";
 import { Alert } from "react-native";
-
-
+import { AuthContextProvider } from "../../context/AuthContext";
+import { useAuth } from "../../hooks/useAuth";
+import { Controller, useForm } from "react-hook-form";
+import { AppError } from "../../utils/AppError";
+import * as yup from 'yup';
+import { yupResolver } from '@hookform/resolvers/yup';
 
 export function SignUp(){
 
-   
-    const [name,setName] = useState('');
-    const [cnpj,setCnpj] = useState('');
-    const [email,setEmail]= useState('');
-    const [password,setPassword] = useState('');
-
-    const navigation = useNavigation();
-    const handleSignUp = async () => {
-        try {
-          // Substitua 'sua_url_da_api/signup' pela URL real da sua API de cadastro
-          const response = await api.post('/store/register', {
-            cnpj: cnpj,
-            name: name,
-            email: email,
-            password: password,
-          });
+   type FormDataProps = {
+    cnpj : string;
+    name: string;
+    email : string;
+    password: string;
+   }
+   const signUpSchema = yup.object({
+    cnpj: yup.string().required('informe o cnpj'),
+    name: yup.string().required('Informe o nome.'),
+    email: yup.string().required('Informe o e-mail').email('E-mail inválido.'),
+    password: yup.string().required('Informe a senha').min(6, 'A senha deve ter pelo menos 6 dígitos.'),
     
-          // Verifica se a resposta é 200 (sucesso)
-          if (response.status === 200) {
-            // Redireciona para a tela de login
-            handleLogIn();
-            Alert.alert('Cadastro bem-sucedido', 'Você pode fazer login agora.');
-          } else {
-            // Exibe um alerta em caso de resposta inesperada
-            Alert.alert('Erro no cadastro', 'Algo deu errado. Tente novamente.');
-          }
-        } catch (error) {
-          console.error('Erro no cadastro:', error.message);
-          Alert.alert('Erro no cadastro', 'Verifique suas informações e tente novamente.');
-        }
-      };
+  });
+    
 
+    
+      const [isLoading, setIsLoading] = useState(false);
+    
+      
+      const { singIn } = useAuth();
+      
+      const { control, handleSubmit, formState: { errors } } = useForm<FormDataProps>({
+        resolver: yupResolver(signUpSchema),
+      });
+    const navigation = useNavigation();
+    
+    async function handleSignUp({cnpj, name, email, password }: FormDataProps) {
+      try {
+        setIsLoading(true)
+  
+        await api.post('/store/register', {cnpj, name, email, password });
+        await singIn(email, password)
+      } catch (error) {
+        setIsLoading(false);
+  
+        const isAppError = error instanceof AppError;
+  
+        const title = isAppError ? error.message : 'Não foi possível criar a conta. Tente novamente mais tarde';
+        Alert.alert(title);
+       
+      }
+    }
+  
 
     function handleLogIn(){
         
@@ -55,11 +70,35 @@ export function SignUp(){
                 <ContainerTitle>
                 <TextTitleScreen>Registre-se para utilizar a aplicação</TextTitleScreen>
                 </ContainerTitle>
-                <Input placeholder="cnpj" keyboardType="numeric" onChangeText={(text)=>setCnpj(text)} value={cnpj}/>
-                <Input placeholder="name" keyboardType="default" autoCorrect={false} onChangeText={(text)=>setName(text)} value={name}/>
-                <Input placeholder="Email" keyboardType="email-address" onChangeText={(text)=>setEmail(text)} value={email}/>
-                <Input placeholder="senha" secureTextEntry onChangeText={(text)=>setPassword(text)} value={password}/>
-            <ButtonSignUp title="registrar-se" onPress={handleSignUp}/>
+                 <Controller
+                   control={control}
+                   name="cnpj"
+                   render={({ field: { onChange, value } }) => (
+                <Input placeholder="cnpj"  onChangeText={onChange} value={value}/>
+                )}
+                />
+                 <Controller
+                   control={control}
+                   name="name"
+                   render={({ field: { onChange, value } }) => (
+                <Input placeholder="name" keyboardType="default" autoCorrect={false} onChangeText={onChange} value={value}/>
+                )}
+                />
+                <Controller
+                   control={control}
+                   name="email"
+                   render={({ field: { onChange, value } }) => (
+                <Input placeholder="Email" keyboardType="email-address" onChangeText={onChange} value={value}/>
+                )}
+                />
+                 <Controller
+                   control={control}
+                   name="password"
+                   render={({ field: { onChange, value } }) => (
+                <Input placeholder="senha" secureTextEntry onChangeText={onChange} value={value}/>
+                )}
+                />
+            <ButtonSignUp title="registrar-se" onPress={handleSubmit(handleSignUp)}/>
             </ContainerInputs>
            
         </Container>

@@ -5,7 +5,7 @@ import { Container, ContainerInputs, ContainerTextButton, TextBottom, TouchableB
 import { useState } from "react";
 import axios from "axios";
 import { Alert } from "react-native";
-
+import { storageAuthTokenSabe } from "../../storage/storageAuthToken";
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { api } from "../../services/api";
 
@@ -31,12 +31,14 @@ export function SignIn() {
           });
     
           const token = response.data.token;
-          // Faça algo com o token, como armazená-lo no AsyncStorage
-          await AsyncStorage.setItem('userToken', token);
+          // token armazenado no AsyncStorage
+          api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+          await storageAuthTokenSabe(token);
 
           // Exemplo: exibir o token em um alerta
           Alert.alert('Login bem-sucedido', `Token: ${token}`);
         } catch (error) {
+            // Alert by errors
           console.error('Erro no login:', error.message);
           Alert.alert('Erro no login', 'Verifique suas credenciais e tente novamente.');
         }
